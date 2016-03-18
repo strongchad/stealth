@@ -9,18 +9,21 @@ data Tile = Tile LightLevel -- this datatype stores information about a tile; no
 
 data Grid = Grid (Seq (Seq Tile)) [(LightSource, Coordinate)]
 
-data LightSource = SquareLight Int Int
+data Direction = North | East | South | West deriving Eq
 
+data LightSource = SquareLight Int Int | Sun Direction
+
+
+
+initialGrid :: Grid
+initialGrid = Grid (Sequence.replicate 20 $ Sequence.replicate 20 $ Tile Drk) []
+
+test cs = foldl (.) id [(addLight (SquareLight 1 3) c)|c <- cs] initialGrid
 
 distance :: Coordinate -> Coordinate -> Int
 distance (x1,y1) (x2,y2) = max (abs $ x1-x2) (abs $ y1-y2) --'Moore distance'
 --distance (x1,y1) (x2,y2) = sum [(abs $ x1-x2),(abs $ y1-y2)] --Manhattan distance
 --distance (x1,y1) (x2,y2) = floor $ sqrt $ fromIntegral $ sum [(x1-x2)*(x1-x2),(y1-y2)*(y1-y2)] --Euclidean distance
-
-initialGrid :: Grid
-initialGrid = Grid (Sequence.replicate 20 $ Sequence.replicate 20 $ Tile Drk) []
-
-test c@(x,y) = addLight (SquareLight 2 3) c initialGrid
 
 brighten :: Tile -> LightLevel -> Tile
 brighten (Tile tl) ll = if ll > tl
@@ -29,6 +32,7 @@ brighten (Tile tl) ll = if ll > tl
 
 addLight :: LightSource -> Coordinate -> Grid -> Grid
 addLight l@(SquareLight r1 r2) (x,y) (Grid tss ls) = Grid (((updateTiles (\c -> if r1 > distance (x,y) c then (\t -> brighten t Brt) else id)) . (updateTiles (\c -> if r2 > distance (x,y) c then (\t -> brighten t Dim) else id))) tss) $ (l,(x,y)):ls
+--addLight l@(Sun d) _ (Grid tss ls) = 
 
 updateTile :: Coordinate -> (Tile -> Tile) -> Seq(Seq Tile) -> Seq(Seq Tile)
 updateTile (x,y) f tss = update y (adjust f x (index tss y)) tss
